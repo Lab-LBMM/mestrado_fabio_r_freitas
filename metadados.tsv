@@ -1,6 +1,6 @@
 File_name	Ant_species	Sample_name	Sequencing	Type	Interleaved	IMG_code	Ref
-ASR041_1.fastq-001.gz	Atta sexdens	ASBM4_1	Illumina HiSeq2000	Paired end (2 x 100 pb)	no	3300009944	Barcoto et al., 2020
-ASR041_2.fastq-002.gz	Atta sexdens	ASBM4_2	Illumina HiSeq2000	Paired end (2 x 100 pb)	no	3300009944	Barcoto et al., 2020
+ASR041_1.fastq-001.gz	Atta sexdens	ASBM4_R1	Illumina HiSeq2000	Paired end (2 x 100 pb)	no	3300009944	Barcoto et al., 2020
+ASR041_2.fastq-002.gz	Atta sexdens	ASBM4_R2	Illumina HiSeq2000	Paired end (2 x 100 pb)	no	3300009944	Barcoto et al., 2020
 11254.5.198435.CGATGT.fastq.gz	Atta bisphaerica	ABBM1	Illumina HiSeq2500	Paired end (2 x 150 pb)	yes	3300013023	Khadempour et al., 2020
 11254.5.198435.TTAGGC.fastq.gz	Atta bisphaerica	ABBM2	Illumina HiSeq2500	Paired end (2 x 150 pb)	yes	3300013025	Khadempour et al., 2020
 11254.6.198438.TGACCA.fastq.gz	Atta bisphaerica	ABBM3	Illumina HiSeq2500	Paired end (2 x 150 pb)	yes	3300013022	Khadempour et al., 2020

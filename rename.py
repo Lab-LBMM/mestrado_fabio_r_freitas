@@ -14,12 +14,12 @@ files = os.listdir(dir_path)
 file_names = metadados['File_name']
 sample_names = metadados['Sample_name']
 
-for old_name, new_name in zip(sample_names, file_names):
+for old_name, new_name in zip(file_names, sample_names):
     #Concatenando o caminho da pasta com os arquivos 
     #Nomes antigos
-    old = os.path.join(dir_path, file_names)
+    old = os.path.join(dir_path, old_name)
     #Nomes novos (usando o f-string)
-    new = os.path.join(dir_path, f"{sample_names}.fastq.gz")
+    new = os.path.join(dir_path, f"{new_name}.fastq.gz")
     #Renomear
     os.rename(old, new)
 
