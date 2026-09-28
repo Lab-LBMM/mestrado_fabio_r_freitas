@@ -1,7 +1,8 @@
 # Mestrado FabioRFreitas
 
-Repositório para a documentação e mantenção da reprodutibilidade das análises conduzidas durante o Mestrado
+Repositório para a documentação e mantenção da reprodutibilidade das análises conduzidas durante o Mestrado.
 
 ## Título do Projeto: Exploração metagenômica da “matéria escura” microbiana e funcional de jardins de fungos cultivados por formigas com foco em novos antifúngicos
 
 ## Descrição:
+Apesar do importante papel dos microrganismos e de seu potencial funcional, a grande maioria permanecem desconhecidos, sendo conhecidos como Matéria Escura Microbiana. Essa porção elusiva  
