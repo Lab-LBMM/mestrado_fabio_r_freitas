@@ -1,44 +1,50 @@
-library(readr)
+
+#Load the necessary packages
+{library(readr)
 library(openxlsx)
-library(readxl)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(stringr)
 library(scales)
+library(purrr)}
 
-#Definir caminho e o diretório de trabalho
-path <- "/home/freitas/LBMM/Mestrado/Analysis/checkm2"
-setwd(path)
+#Path to checkm2 results
+path <- "/home/freitas/LBMM/Mestrado/Analysis/checkm2/"
 
-checkM2 <- read_tsv("ecoevobio_quality_report.tsv")
+#List of files and path added to files
+list_checkm2 <- list.files(path, pattern = "_quality_report.tsv")
+list_checkm2_path <- file.path(path, list_checkm2)
 
+#Import files
+checkM2 <- list_checkm2_path %>% map(~read_tsv(., col_names = TRUE))
+names(checkM2) <- list_checkm2 %>% map(~gsub("_quality_report.tsv","",.))
 
-Qualidade <- checkM2 %>% mutate(AMOSTRA = as.integer(str_extract(Name, "(?<=^S)\\d+"))) %>%
+#Define quality of MAGs
+quality <- checkM2 %>% map(function(checkM2_df) {
+  checkM2_df %>% mutate(SAMPLE = as.integer(str_extract(Name, "(?<=^S)\\d+"))) %>%
   mutate(Completeness_General = as.double(Completeness_General), Contamination = as.double(Contamination)) %>% 
-  mutate(Qualidade = ifelse((Completeness_General >= 90.0 & Contamination <= 5.0), "1.High",
+  mutate(Quality = ifelse((Completeness_General >= 90.0 & Contamination <= 5.0), "1.High",
                             ifelse((Completeness_General >= 50.0 & Contamination <= 10.0), "2.Medium", "3.Low")))
+})
 
+#Count MAGs by quality
+quality_count_sample <- quality %>% map(~group_by(.,SAMPLE, Quality) %>% summarise(MAGs=n()))
+quality_count <- quality %>% map(~group_by(.,Quality) %>% summarise("Total MAGs"=n()) %>% 
+                                  mutate(Percentual = scales::percent(`Total MAGs` / sum(`Total MAGs`))))
 
-Qualidade_cont_amostra <- Qualidade %>% group_by(AMOSTRA, Qualidade) %>% summarise(n_MAGs=n())
-Qualidade_cont <- Qualidade %>% group_by(Qualidade) %>% summarise(n_MAGs=n())
+print(quality_count)
+write.xlsx(quality_count,paste0(path,"quality_count.xlsx")) 
 
-contagem_geral <- Qualidade %>%
-  count(Qualidade, name = "Total_MAGs") %>%
-  mutate(Percentual = scales::percent(Total_MAGs / sum(Total_MAGs)))
-
-print(contagem_geral)
-write.xlsx(contagem_geral,"contagem_qualidade.xlsx" ) 
-
-Qualidade_plot2 <- Qualidade %>% 
+quality_plot2 <- quality %>%
   ggplot(aes(x = Completeness_General, y = Contamination)) +
   geom_hline(yintercept = 5, linetype = "dashed", color = "grey40") +
   geom_vline(xintercept = 90, linetype = "dashed", color = "grey40") +
-  geom_point(aes(size = Genome_Size, color = Qualidade), alpha = 0.7) +
+  geom_point(aes(size = Genome_Size, color = quality), alpha = 0.7) +
   
   scale_color_manual(
     name = "MAG quality",
-    values = c("1.High" = "#1b9e77", "2.Medium" = "#d95f02", "3.Low" = "#7570b3"),
+    values = c("1.High" = "#7570b3", "2.Medium" = "#d95f02", "3.Low" = "gray"),
     labels = c("High", "Medium", "Low")
   ) +
   
@@ -56,11 +62,6 @@ Qualidade_plot2 <- Qualidade %>%
   ) +
   theme_bw()
 
-print(Qualidade_plot2)
+print(quality_plot2)
 
-# #Qualidade_plot2 <- Qualidade %>% ggplot() +
-#   geom_point(aes(x = Completeness_General, y = Contamination, size = Genome_Size, color = Qualidade)) + 
-#   geom_abline(intercept = 5, slope = 0, color = "darkblue") + geom_vline(xintercept = 90, color = "darkblue") +
-#   theme_bw()
-#print(Qualidade_plot2)
 
