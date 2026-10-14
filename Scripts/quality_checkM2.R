@@ -36,11 +36,11 @@ quality_count <- quality %>% map(~group_by(.,Quality) %>% summarise("Total MAGs"
 print(quality_count)
 write.xlsx(quality_count,paste0(path,"quality_count.xlsx")) 
 
-quality_plot2 <- quality %>%
-  ggplot(aes(x = Completeness_General, y = Contamination)) +
+quality_plot2 <- quality %>% map(function(df){
+  df %>%  ggplot(aes(x = Completeness_General, y = Contamination)) +
   geom_hline(yintercept = 5, linetype = "dashed", color = "grey40") +
   geom_vline(xintercept = 90, linetype = "dashed", color = "grey40") +
-  geom_point(aes(size = Genome_Size, color = quality), alpha = 0.7) +
+  geom_point(aes(size = Genome_Size, color = Quality), alpha = 0.7) +
   
   scale_color_manual(
     name = "MAG quality",
@@ -61,7 +61,9 @@ quality_plot2 <- quality %>%
     y = "Contamination (%)"
   ) +
   theme_bw()
+})
 
-print(quality_plot2)
+plot_all <- 
+print(quality_plot2$MEGAHIT_coassembly_hostrm)
 
 
