@@ -66,7 +66,7 @@ quality_plot2 <- map2(quality,  filename, function(df, dfname){
     name = "Size (Mb)",
     labels = function(x) paste0(round(x / 1e6, 2), " Mb"),
     limits = c(0, 600e6),
-    breaks = seq(5e6, 150e6, by = 25e6),
+    breaks = seq(0.5e6, 50e6, by = 10e6),
     range = c(1, 8)
   ) +
   
