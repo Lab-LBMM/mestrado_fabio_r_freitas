@@ -16,6 +16,7 @@ Microbial dark matter holds enormous, still-untapped biotechnological capacity, 
 This work was carried out with support from the São Paulo Research Foundation (FAPESP), Brazil. Project number 2024/19418-0
 
 ## Computacional Resources: 
-This research was supported by resources supplied by the Center for Scientific Computing (NCC/GridUNESP) of São Paulo State University (UNESP).
-This work made use of resources provided by the Centro Nacional de Processamento de Alto Desempenho em São Paulo (CENAPAD-SP).
+*This research was supported by resources supplied by the Center for Scientific Computing (NCC/GridUNESP) of São Paulo State University (UNESP).
+
+*This work made use of resources provided by the Centro Nacional de Processamento de Alto Desempenho em São Paulo (CENAPAD-SP).
 
