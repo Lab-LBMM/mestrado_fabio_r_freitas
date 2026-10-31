@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #Libraries
 import argparse
 import pandas as pd
@@ -6,23 +8,32 @@ import re
 import shutil
 
 #Ask the user for the paths ---> ARGPARSE
-#path_checkM2_output = input("Give the path for the quality report from checkM2: ")
-#parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(prog="MAGs_filt",description="Filters bins with high and medium quality and modifies the name assigned by VAMB")
+parser.add_argument("-r","--checkM2_report", default="./quality_report.tsv",
+                     help="Path to checkM2 quality report file. Include all the name of the file, e.g. quality_report.tsv")
+parser.add_argument("-l", "--log", default="./log.txt",
+                     help= "Path to the VAMB log file. Include all the name of the file, e.g. log.txt" )
+parser.add_argument("-i", "--input", default="./bins",
+                     help= "Path to the VAMB bins folder.")
+parser.add_argument("-o", '--out_dir', default="./",
+                     help= "Path to the output folder.")
+parser.add_argument("-p","--pattern", default="", 
+                    help="Pattern to be added to the end of the folder name and the bin files.")
 
-checkM2_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/checkm2_assembly_host_rm/quality_report.tsv"
-log_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/log.txt"
-MAGs_dir_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/bins"
-output_dir = "Data/MEGAHIT_assembly_host_removed_k21_141_10/HighMedium_bins"
+args = parser.parse_args()
+
+
+#path to the files and folders 
+checkM2_path = args.checkM2_report
+log_path = args.log
+MAGs_dir_path = args.input
+output_dir = args.out_dir
 
 #pattern to insert on the MAG name to identify the test
-TEST = "VMH-a_htrm_k21"
+TEST = args.pattern
 
-#Import quality data from checkM2
+#Import quality data from checkM2  
 bins_table = pd.read_table(checkM2_path)
-
-#select just the necessary columns
-bins_table = bins_table[["Name", "Completeness_General", "Contamination", "Genome_Size"]]
-print(bins_table)
 
 ##read VAMB log for retrive samples order
 #Empty list to fill with the order and samples name
@@ -84,18 +95,25 @@ for file in (MAGs_files):
             print(f"The name {file} isn't a VAMB file name. The file name may have already been changed.")
 
 bins_table["New_name"] = bins_table["Name"].map(Samples_name_map).replace(".fna",".fna.gz")
-print(bins_table["New_name"])
 
 #Filtering for quality - medium and high quality MAGs
 HighMedium_Quality = bins_table[(bins_table["Completeness_General"] >= 50) & (bins_table["Contamination"] <= 10)]
 N_bins = len(HighMedium_Quality)
 
-print(f" \n >>>> There are {N_bins} MAGs of Medium or High Quality")
+print(f" \n>>>> There are {N_bins} MAGs of Medium or High Quality")
 
 #Create a new directory and move the medium and high quality MAGs
-
 os.makedirs(f"{output_dir}_{TEST}", exist_ok=True)
 
+#Write the old name and the new name of all MAGs
+bins_table = bins_table[["Name","New_name"]]
+bins_table.to_csv(f"{output_dir}_{TEST}/bin_names.tsv", sep="\t")
+
+#Write a tsv file with the result of the filtering
+HighMedium_Quality = HighMedium_Quality.set_index("Name")
+HighMedium_Quality.to_csv(f"{output_dir}_{TEST}/HighMedium_checkM2.tsv", sep="\t")
+
+#Move fasta files of bins with high and medium quality
 for file in (HighMedium_Quality["New_name"]):
     
     old_path = os.path.join(MAGs_dir_path, file)
