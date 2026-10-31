@@ -1,17 +1,18 @@
 #Libraries
+import argparse
+import pandas as pd
 import os
 import re
-import pandas as pd
-import argparse
+import shutil
 
 #Ask the user for the paths ---> ARGPARSE
 #path_checkM2_output = input("Give the path for the quality report from checkM2: ")
 #parser = argparse.ArgumentParser()
 
-checkM2_path = "Data/VAMB_MEGAHIT_assembly_host_removed_k21_141_10/checkm2_assembly_host_rm/quality_report.tsv"
-log_path = "Data/VAMB_MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/log.txt"
-MAGs_dir_path = "Data/VAMB_MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/bins"
-output_dir = "Data/VAMB_MEGAHIT_assembly_host_removed_k21_141_10/"
+checkM2_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/checkm2_assembly_host_rm/quality_report.tsv"
+log_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/log.txt"
+MAGs_dir_path = "Data/MEGAHIT_assembly_host_removed_k21_141_10/VAMB_host_rm_assembly/bins"
+output_dir = "Data/MEGAHIT_assembly_host_removed_k21_141_10/HighMedium_bins"
 
 #pattern to insert on the MAG name to identify the test
 TEST = "VMH-a_htrm_k21"
@@ -58,30 +59,32 @@ print(samples_order)
 MAGs_files = os.listdir(MAGs_dir_path)
 Samples_name_map = {}
 for file in (MAGs_files):
-    #Take the number between S and C on VAMB file name
-    VAMB_index = file.split("C")[0].replace("S","")
-    VAMB_index = int(VAMB_index)
-    #Sample name of the file based on the index and order retrived from VAMB
-    SAMPLE = samples_order.loc[VAMB_index, "samples"]
-    #print(f"\nindex - {VAMB_index}", "\nSample name -->", SAMPLE) # --> used to verify if the index match with the sample name
-    #Replace the VAMB sample name by the real sample name, mantaining the contig identifier. The test ID is also inserted.
-    new_name = re.sub(r"S[0-9]+C", f"{SAMPLE}C", file).replace(".fna", f"_{TEST}.fna")
-    #Build a map for create a new column on the input table with the new name corresponding to the VAMB
-    Samples_name_map[file.replace(".gz", "")] = new_name
+    if match := re.search(r"S[0-9]+C", file):
+        #Take the number between S and C on VAMB file name
+        VAMB_index = file.split("C")[0].replace("S","")
+        VAMB_index = int(VAMB_index)
+        #Sample name of the file based on the index and order retrived from VAMB
+        SAMPLE = samples_order.loc[VAMB_index, "samples"]
+        #print(f"\nindex - {VAMB_index}", "\nSample name -->", SAMPLE) #Used to verify if the index match with the sample name
+        #Replace the VAMB sample name by the real sample name, mantaining the contig identifier. The test ID is also inserted.
+        new_name = re.sub(r"S[0-9]+C", f"{SAMPLE}C", file).replace(".fna", f"_{TEST}.fna")
+        #Build a map for create a new column on the input table with the new name corresponding to the VAMB
+        Samples_name_map[file.replace(".gz", "")] = new_name
 
-    #concatenat old name and the files path
-    old_name_path = os.path.join(MAGs_dir_path, file)
-    #concatenat new name and the files path
-    new_name_path = os.path.join(MAGs_dir_path, new_name)
+        #concatenat old name and the files path
+        old_name_path = os.path.join(MAGs_dir_path, file)
+        #concatenat new name and the files path
+        new_name_path = os.path.join(MAGs_dir_path, new_name)
 
-    #Rename files
-    print(f"{file} ----> {new_name}")
-    #os.rename(old_name_path, new_name_path)
+        #Rename files just if the old name exists yet
+        if os.path.exists(old_name_path):
+            print(f"{file} ----> {new_name}")
+            os.rename(old_name_path, new_name_path)
+        elif os.path.exists(new_name_path):
+            print(f"The name {file} isn't a VAMB file name. The file name may have already been changed.")
 
-print(Samples_name_map)
-bins_table["New_name"] = bins_table["Name"].map(Samples_name_map)
-#print(bins_table)
-print(bins_table.head())
+bins_table["New_name"] = bins_table["Name"].map(Samples_name_map).replace(".fna",".fna.gz")
+print(bins_table["New_name"])
 
 #Filtering for quality - medium and high quality MAGs
 HighMedium_Quality = bins_table[(bins_table["Completeness_General"] >= 50) & (bins_table["Contamination"] <= 10)]
@@ -90,6 +93,11 @@ N_bins = len(HighMedium_Quality)
 print(f" \n >>>> There are {N_bins} MAGs of Medium or High Quality")
 
 #Create a new directory and move the medium and high quality MAGs
-os.makedirs(output_dir)
 
+os.makedirs(f"{output_dir}_{TEST}", exist_ok=True)
 
+for file in (HighMedium_Quality["New_name"]):
+    
+    old_path = os.path.join(MAGs_dir_path, file)
+    new_path = os.path.join(f"{output_dir}_{TEST}", file)
+    shutil.move(old_path, new_path)
