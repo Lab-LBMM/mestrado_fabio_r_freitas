@@ -7,7 +7,7 @@ import os
 import re
 import shutil
 
-#Ask the user for the paths ---> ARGPARSE
+#Define command-line arguments for user input
 parser = argparse.ArgumentParser(prog="MAGs_filt",description="Filters bins with high and medium quality and modifies the name assigned by VAMB")
 parser.add_argument("-r","--checkM2_report", default="./quality_report.tsv",
                      help="Path to checkM2 quality report file. Include all the name of the file, e.g. quality_report.tsv")
