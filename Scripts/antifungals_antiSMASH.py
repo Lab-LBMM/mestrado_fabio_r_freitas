@@ -23,15 +23,38 @@ for root, dirs, files in os.walk(antismash_results_path):
         if f.endswith(".json"):
             #Retrive the path to the json found
             json_path = os.path.join(root, f)
-            print(f)
+            #print(f)
             #Read the json file and save the content
             with open(json_path, "r") as file:
                 antismash_data = json.load(file)
+
                 #Content that will be saved
                 for record in antismash_data.get("records", []):
-                    print(record["id"])
+                    for feature in record.get("features", []):
+                        #Select just the PFAM_domain features from BGCs
+                        if feature["type"] == "protocluster":
+                            for type in feature["type"]:
+                               for area in record.get("areas", []):
+                                    BGCs.append({
+                                    "Sample_file": f,
+                                    "ID": record["id"],
+                                    "BGC": area["protoclusters"],
+                                    "PFAM_domains": type["PFAM_domain"]
+                                    })
 
+                            #for domain in feature["type"]["PFAM_domain"]:
+                             #   print(domain)
+                            
+                    
 
+                    #for feature in record["features"]:
+                        #print(record["id"])
+                        #print(len(record))
+                        #if feature["type"] == "region":
+                            #for region in 
+                            #print(len(feature["qualifiers"]))
+
+                 #   
 
 
 
