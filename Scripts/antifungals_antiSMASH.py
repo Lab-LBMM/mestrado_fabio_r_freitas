@@ -14,23 +14,37 @@ args = parser.parse_args()
 #Path to the antismash folder
 #antismash_output_path = args.antismash_dir
 antismash_results_path = "/home/freitas/LBMM/EvoEcoBio/antismash_ecoevobio_data/identified (teste)-20260927T214618Z-1-001/identified (teste)"
+pfam_list = ""
 
 #Find the json file
-antismash_json = []
+BGCs = []
 for root, dirs, files in os.walk(antismash_results_path):
-    for file in files:
-        if file.endswith(".json"):
-            json_path = os.path.join(root, file)
-            antismash_json.append(json_path)
+    for f in files:
+        if f.endswith(".json"):
+            #Retrive the path to the json found
+            json_path = os.path.join(root, f)
+            print(f)
+            #Read the json file and save the content
+            with open(json_path, "r") as file:
+                antismash_data = json.load(file)
+                #Content that will be saved
+                for record in antismash_data.get("records", []):
+                    print(record["id"])
 
-#Read the json file and save the content
-for files in antismash_json:
-    try:
-        with open(files, "r") as file:
-            content = json.load(file)
-    except FileNotFoundError:
-        print("File was not found")
 
 
-print(content)
-#records ---> features ---> region/protocluster
+
+
+    #for feature in record["features"]:
+    # if tiver region
+
+
+
+
+#print(antismash["records"][0:])
+
+#if 
+
+
+#print(content)
+#select records ---> features ---> type: region/protocluster, salvar record idnos selecionados :type: pfam ---> qualifiers ---> db_xref
