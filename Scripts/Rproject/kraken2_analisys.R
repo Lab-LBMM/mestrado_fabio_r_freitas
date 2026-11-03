@@ -11,38 +11,37 @@ suppressPackageStartupMessages(
 {library(argparse)
  library(readr)
  library(R.utils)
+ library(openxlsx)
  library(dplyr)
  library(tidyr)
  library(purrr)
  library(ggplot2)})
 
-# # create parser object
-# parser <- ArgumentParser()
-# 
-# #Argument for input
-# parser$add_argument(
-#   "-i",
-#   "--input",
-#   type = "character",
-#   default = "./",
-#   help = "Path to input folder with report files from Kraken2"
-# )
-# 
-# parser$add_argument(
-#   "-f",
-#   "--folders",
-#   action = "store_true",
-#   default = FALSE,
-#   help = "Use this flag for a list of folders where each contains a sample's Kraken2 report file"
-# )
-# 
-# # get command line options, if help option encountered print help and exit,
-# # otherwise if options not found on command line then set defaults,
-# args <- parser$parse_args()
-# 
-# dir_path <- args$input
+# create parser object
+parser <- ArgumentParser()
 
-dir_path <- "/home/genomaa/Resultados/0.Outros/M/kraken2_pluspfp_cleaned"
+#Argument for input
+parser$add_argument(
+  "-i",
+  "--input",
+  type = "character",
+  default = "./",
+  help = "Path to input folder with report files from Kraken2"
+)
+
+parser$add_argument(
+  "-f",
+  "--folders",
+  action = "store_true",
+  default = FALSE,
+  help = "Use this flag for a list of folders where each contains a sample's Kraken2 report file"
+)
+
+# get command line options, if help option encountered print help and exit,
+# otherwise if options not found on command line then set defaults,
+args <- parser$parse_args()
+
+dir_path <- args$input
 
 ##Get the list of files with path
 files_path <- list.files(path = dir_path, pattern = "report.txt",
@@ -64,19 +63,33 @@ kreports <- map2(kreports, names, function(df, name){
 #All domains and unclassified
 overall <- kreports %>% map(~filter(., Taxon_rank == "D" | Taxon_rank == "U") %>% select(1,Classification))
  
-#Bacteria
+##Bacteria
 bacteria <- map(kreports, function(df){
-  
+#Get all domains lines
 line_domains <- which(df$Taxon_rank == "D")
+#Get bacteria domain line
 line_bac <- which(df$TaxID == 2)
-index_bac <- line_domains[line_bac == line_domains]
-print(index_bac)
-
-print(line_domains )
+#Identify which domain line is bacteria and the next one
+index_bac <- which(line_domains == line_bac)
+line_next_domain <- line_domains[index_bac + 1]
+#Use the bacteria line and the next domain line as index for slice the df
+df <- df %>% slice(line_bac:line_next_domain)
 })
-#next_domain <- kreports %>% map(function(df) {}  )
 
-#Bac %>% kreports %>% map(~filter(., Taxon_rank == ))
+#Calculate the new percentage for bacteria
+bacteria <- map2(bacteria, names, function(df, name){
+ df %>% mutate(across(.cols = c(-Taxon_rank, -Classification), .fns = as.numeric)) %>%
+    mutate(!!name := Reads/df[[1,2]] * 100)
+})
+
+#Round percentage
+bacteria <- map(bacteria,  function(df) {df %>% mutate(across(1, ~ round(., 2))) })
+
+##Gerar um arquivo de excell com os dados originais##
+
+hs <- createStyle(textDecoration = "BOLD", fontSize = 12, fontName = "Calibri")       
+write.xlsx(bacteria, headerStyle = hs,
+           file = paste0("../../Output/Bacteria_kraken2.xlsx"))
 
 ##Plots
 #All domains and unclassified
@@ -92,5 +105,5 @@ overall_plot <- overall_join %>%
   labs(x = "Samples", y = "Relative Abundance (%)") + 
   theme_minimal(base_size = 12) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave("kraken2_plot.png", plot = overall_plot)
+ggsave("../../Plots/kraken2_plot.png", plot = overall_plot)
 print(overall_plot)
