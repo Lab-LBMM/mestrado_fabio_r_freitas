@@ -15,39 +15,43 @@ suppressPackageStartupMessages(
  library(R.utils)
  library(openxlsx)
  library(dplyr)
+ library(stringr)
  library(tidyr)
  library(purrr)
  library(ggplot2)})
 
-# # create parser object
-# parser <- ArgumentParser()
-# 
-# #Argument for input
-# parser$add_argument(
-#   "-i",
-#   "--input",
-#   type = "character",
-#   default = "./",
-#   help = "Path to input folder with report files from Kraken2"
-# )
-# 
-# parser$add_argument(
-#   "-f",
-#   "--folders",
-#   action = "store_true",
-#   default = FALSE,
-#   help = "Use this flag for a list of folders where each contains a sample's Kraken2 report file"
-# )
-# 
-# parser$add_argument(
-#   
-# )
-# 
-# # get command line options
-# args <- parser$parse_args()
-# 
-# dir_path <- args$input
-dir_path <- "/home/freitas/LBMM/Mestrado/Analysis/1.Pre-processamento/1.3.kraken2_pluspfp_reports"
+#create parser object
+parser <- ArgumentParser()
+
+#Argument for input
+parser$add_argument(
+ "-i",
+ "--input",
+ type = "character",
+ default = "./",
+ help = "Path to input folder with report files from Kraken2. The files to be imported must have 'report' in their name."
+)
+
+parser$add_argument(
+ "-f",
+ "--folders",
+ action = "store_true",
+ default = FALSE,
+ help = "Use this flag for a list of folders where each contains a sample's Kraken2 report file."
+)
+ 
+parser$add_argument(
+    "--sub",
+    default = "",
+    help = "Pattern to remove from file name."
+)
+
+# get command line options
+args <- parser$parse_args()
+
+dir_path <- args$input
+dir_path <- "/home/genomaa/Resultados/0.Outros/M/kraken2_pluspfp_cleaned/kreports/bracken"
+
 
 ##Get the list of files with path
 files_path <- list.files(path = dir_path, pattern = "report", full.names = TRUE, recursive = TRUE ) #recursive = args$folders
@@ -57,7 +61,7 @@ files_list <- basename(files_path)
 kreports <- files_path %>% map(~read_tsv(., col_names = c("Percentage", "Reads", "Reads_taxon", "Taxon_rank", "TaxID", "Classification")))
 
 ## Change namos of each dataframe inside the lists based on the file name
-names <- files_list %>% map(~gsub("_kraken2_report.txt.gz","",.))
+names <- files_list %>% map(~gsub("_kraken2_report.txt_bracken_species.report","",.))
 names(kreports) <- names
 kreports <- map2(kreports, names, function(df, name){
   df %>% rename(!!name := Percentage)
@@ -89,29 +93,45 @@ bacteria <- map(bacteria,  function(df) {
   })
 
 #Retrieve a list of bacterial species in samples, grouped by host ant species
-list_ABBM <- bacteria[grepl("^ABBM", names(bacteria))] %>% reduce(~full_join(.x,.y, by = "Classification", .)) %>% 
-  relocate(Classification, .before = everything()) %>% arrange(desc(2), desc(3), desc(4)) %>% 
-  slice_head(n = 50) %>% select(Classification) %>% rename("ABBM" = Classification)
+list_ABBM <- bacteria[grepl("^ABBM", names(bacteria))] %>% 
+  reduce(~full_join(.x, .y, by = "Classification")) %>% 
+  relocate(Classification, .before = everything()) %>%
+  rowwise() %>% mutate(Total_Abundance = sum(c_across(where(is.numeric)), na.rm = TRUE)) %>% ungroup()
+list_ABBM_genus <- list_ABBM %>% mutate(Genus = word(str_remove(Classification, "^Candidatus\\s+|^Ca\\.\\s+"), 1)) %>% 
+  group_by(Genus) %>% arrange(desc(Total_Abundance)) %>% slice_head(n = 5) %>%  ungroup() %>%
+  arrange(desc(Total_Abundance)) %>% slice_head(n = 20) %>% select(Classification) %>% rename("ABBM" = Classification)
 
-list_ACBM <- bacteria[grepl("^ACBM", names(bacteria))] %>% reduce(~full_join(.x,.y, by = "Classification", .)) %>% 
-  relocate(Classification, .before = everything()) %>% arrange(desc(2), desc(3), desc(4)) %>% 
-  slice_head(n = 50) %>% select(Classification) %>% rename("ACBM" = Classification)
+list_ACBM <- bacteria[grepl("^ACBM", names(bacteria))] %>% 
+  reduce(~full_join(.x, .y, by = "Classification")) %>% 
+  relocate(Classification, .before = everything()) %>%
+  rowwise() %>% mutate(Total_Abundance = sum(c_across(where(is.numeric)), na.rm = TRUE)) %>% ungroup()
+list_ACBM_genus <- list_ACBM %>% mutate(Genus = word(str_remove(Classification, "^Candidatus\\s+|^Ca\\.\\s+"), 1)) %>% 
+  group_by(Genus) %>% arrange(desc(Total_Abundance)) %>% slice_head(n = 5) %>%  ungroup() %>%
+  arrange(desc(Total_Abundance)) %>% slice_head(n = 20) %>% select(Classification) %>% rename("ACBM" = Classification)
 
-list_ALBM <- bacteria[grepl("^ALBM", names(bacteria))] %>% reduce(~full_join(.x,.y, by = "Classification", .)) %>% 
-  relocate(Classification, .before = everything()) %>% arrange(desc(2), desc(3), desc(4)) %>% 
-  slice_head(n = 50) %>% select(Classification) %>% rename("ALBM" = Classification)
+list_ALBM <- bacteria[grepl("^ALBM", names(bacteria))] %>% 
+  reduce(~full_join(.x, .y, by = "Classification")) %>% 
+  relocate(Classification, .before = everything()) %>%
+  rowwise() %>% mutate(Total_Abundance = sum(c_across(where(is.numeric)), na.rm = TRUE)) %>% ungroup()
+list_ALBM_genus <- list_ALBM %>% mutate(Genus = word(str_remove(Classification, "^Candidatus\\s+|^Ca\\.\\s+"), 1)) %>% 
+  group_by(Genus) %>% arrange(desc(Total_Abundance)) %>% slice_head(n = 5) %>%  ungroup() %>%
+  arrange(desc(Total_Abundance)) %>% slice_head(n = 20) %>% select(Classification) %>% rename("ALBM" = Classification)
 
-list_ASBM <- bacteria[grepl("^ASBM", names(bacteria))] %>% reduce(~full_join(.x,.y, by = "Classification", .)) %>% 
-  relocate(Classification, .before = everything()) %>% arrange(desc(2), desc(3), desc(4)) %>%
-  slice_head(n = 50) %>% select(Classification) %>% rename("ASBM" = Classification)
+list_ASBM <- bacteria[grepl("^ASBM", names(bacteria))] %>% 
+  reduce(~full_join(.x, .y, by = "Classification")) %>% 
+  relocate(Classification, .before = everything()) %>%
+  rowwise() %>% mutate(Total_Abundance = sum(c_across(where(is.numeric)), na.rm = TRUE)) %>% ungroup()
+list_ASBM_genus <- list_ASBM %>% mutate(Genus = word(str_remove(Classification, "^Candidatus\\s+|^Ca\\.\\s+"), 1)) %>% 
+  group_by(Genus) %>% arrange(desc(Total_Abundance)) %>% slice_head(n = 5) %>%  ungroup() %>%
+  arrange(desc(Total_Abundance)) %>% slice_head(n = 20) %>% select(Classification) %>% rename("ASBM" = Classification)
 
-sample_group <- c(list_ABBM, list_ACBM, list_ALBM, list_ASBM)
+sample_group <- c(list_ABBM_genus, list_ACBM_genus, list_ALBM_genus, list_ASBM_genus)
 
 #Write a csv file for each list
 
 for (list in seq_along(sample_group)){
-  write.table(sample_group[list], file = paste0("../../Output/", names(sample_group[list]) , "_k2bac.csv"), sep = ",")
-  
+  write.table(sample_group[list], file = paste0("../../Output/", names(sample_group[list]) , "_k2bac.txt"), 
+              quote = FALSE, row.names = FALSE, col.names = FALSE)
 } 
 
 
