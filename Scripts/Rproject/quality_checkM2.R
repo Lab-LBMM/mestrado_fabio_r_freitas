@@ -2,6 +2,7 @@
 #Load the necessary packages
 {library(readr)
 library(openxlsx)
+library(argparse)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -12,16 +13,26 @@ library(patchwork)
 }
 
 # Opens a window so the user can click and select the folder
-#path <- rstudioapi::selectDirectory(caption = "Select the folder containing the checkM2 files")
+parser <- ArgumentParser()
+
+parser$add_argument(
+  "-i",
+  "--input",
+  default = "./",
+  help = "Input checkM2 report file or folder with several report files"
+) 
+
+args <- parser$parse_args()
 
 #Path to checkm2 results
-path <- "/home/freitas/LBMM/Mestrado/Analysis/checkm2/"
+path <- args$input
+path <- "/home/freitas/LBMM/Mestrado/Analysis/3.Binning/checkM2"
 out_path <-paste0(path,"Results/")
 
 dir.create(out_path)
 
 #List of files and path added to files
-list_checkm2 <- list.files(path, pattern = "_quality_report.tsv")
+list_checkm2 <- list.files(path, pattern = "quality_report.tsv")
 list_checkm2_path <- file.path(path, list_checkm2)
 
 #Import files
