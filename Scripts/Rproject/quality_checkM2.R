@@ -9,6 +9,7 @@ library(ggplot2)
 library(stringr)
 library(scales)
 library(purrr)
+library(ggpmisc)
 library(patchwork)
 }
 
@@ -27,7 +28,7 @@ args <- parser$parse_args()
 #Path to checkm2 results
 path <- args$input
 path <- "/home/freitas/LBMM/Mestrado/Analysis/3.Binning/checkM2"
-out_path <-paste0(path,"Results/")
+out_path <-paste0(path,"/Results/")
 
 dir.create(out_path)
 
@@ -41,29 +42,36 @@ filename <- list_checkm2 %>% map(~gsub("_quality_report.tsv","",.))
 names(checkM2) <- filename
 
 #Define quality of MAGs
-quality <- checkM2 %>% map(function(checkM2_df) {
+checkM2_quality <- checkM2 %>% map(function(checkM2_df) {
   checkM2_df %>% mutate(SAMPLE = as.integer(str_extract(Name, "(?<=^S)\\d+"))) %>%
   mutate(Completeness_General = as.double(Completeness_General), Contamination = as.double(Contamination)) %>% 
   mutate(Quality = ifelse((Completeness_General >= 90.0 & Contamination <= 5.0), "1.High",
-                            ifelse((Completeness_General >= 50.0 & Contamination <= 10.0), "2.Medium", "3.Low")))
+                            ifelse((Completeness_General >= 50.0 & Contamination <= 10.0), "2.Medium", "3.Low"))) %>% filter(Genome_Size <= 80000000) #80 Mb
 })
 
 #Count MAGs by quality
-quality_count_sample <- quality %>% map(~group_by(.,SAMPLE, Quality) %>% summarise(MAGs=n()))
-quality_count <- quality %>% map(~group_by(.,Quality) %>% summarise("Total MAGs"=n()) %>% 
+quality_count_sample <- checkM2_quality %>% map(~group_by(.,SAMPLE, Quality) %>% summarise(MAGs=n()))
+quality_count <- checkM2_quality %>% map(~group_by(.,Quality) %>% summarise("Total MAGs"=n()) %>% 
                                   mutate(Percentual = scales::percent(`Total MAGs` / sum(`Total MAGs`))))
 
 print(quality_count)
 write.xlsx(quality_count,paste0(out_path,"quality_count.xlsx")) 
 
 
+#Create a table with the count of MAGs for each category to use in the table
+count <- quality_count %>% map(function(df){
+  df %>% mutate(Quality = str_remove(Quality, "[1-3]\\.")) %>% mutate(MAGs = paste0(df$'Total MAGs', " (", Percentual, ")")) %>%
+    add_row(Quality = "Total", MAGs = paste0(as.character(sum(df$'Total MAGs')), " (100%)")) %>% select(Quality, MAGs)
+})
+
 #Create all individual plots for each checkM2 file
-quality_plot2 <- map2(quality,  filename, function(df, dfname){
+quality_plot2 <- pmap(list(checkM2_quality, filename, count), function(df, dfname, count_df){
 
   df %>%  ggplot(aes(x = Completeness_General, y = Contamination)) +
   geom_hline(yintercept = 5, linetype = "dashed", color = "grey20") +
   geom_vline(xintercept = 90, linetype = "dashed", color = "grey20") +
   geom_point(aes(size = Genome_Size, color = Quality), alpha = 0.7) +
+    coord_cartesian(ylim = c(0, 100)) +
   
   scale_color_manual(
     name = "MAG quality",
@@ -71,13 +79,22 @@ quality_plot2 <- map2(quality,  filename, function(df, dfname){
     labels = c("High", "Medium", "Low"),
     limits = c("1.High", "2.Medium", "3.Low"), drop = FALSE
   ) +
+    
+    annotate(
+      geom = "table_npc",
+      npcx = 0.05, 
+      npcy = 0.95, 
+      label = list(count_df),
+      size = 4,
+      table.theme = ttheme_gtsimple()
+    ) +
   
-  # Alteração para número normal / Mb:
+  # Changing to Mb:
   scale_size_continuous(
     name = "Size (Mb)",
     labels = function(x) paste0(round(x / 1e6, 2), " Mb"),
     limits = c(0, 600e6),
-    breaks = seq(0.5e6, 50e6, by = 10e6),
+    breaks = c(0.5e6, 5e6, seq(10e6, 60e6, by = 20e6)),
     range = c(1, 8)
   ) +
   
@@ -91,10 +108,8 @@ quality_plot2 <- map2(quality,  filename, function(df, dfname){
 })
 
 #Combine all plots
-combined_plot <- wrap_plots(quality_plot2, ncol = 2) + plot_layout(guides = "collect", axes = "collect")
+combined_plot <- wrap_plots(quality_plot2, ncol = 3) + plot_layout(guides = "collect", axes = "collect")
 combined_plot 
-ggsave(filename = paste0(out_path, "checkM2_scatterplot.png"), combined_plot)
-
-#plot_all <- quality_plot2 %>% map(~print(.))
+ggsave(filename = paste0(out_path, "checkM2_scatterplot.png"), combined_plot, width = 16, height = 8)
 
 
