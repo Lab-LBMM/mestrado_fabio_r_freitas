@@ -18,18 +18,16 @@ def main():
     #antismash_output_path = args.antismash_dir
     antismash_results_path = "/home/freitas/LBMM/EvoEcoBio/antismash_ecoevobio_data/identified (teste)-20260927T214618Z-1-001/identified (teste)"
     pfam_list = "set"
-
+    PFAM = []
     #Find the json file
-    BGCs = {"Sample_file": [],
-            "ID": [],
-            "Protocluster": [],
-            "PFAM_domains": []
+    BGCs = {"Sample_file": {},
             }
 
     for root, dirs, files in os.walk(antismash_results_path):
         for f in files:
             if f.endswith(".json"):
-                BGCs["Sample_file"] = f
+                Sample = {"File": {f}}
+                
                 #Retrive the path to the json found
                 json_path = os.path.join(root, f)
                 #Read the json file and save the content
@@ -46,10 +44,13 @@ def main():
                         for area in areas:
                             #If there is a BGC, it will take the features
                             if "protoclusters" in area:
-                                BGCs["ID"].append(record["id"])
+                                contig = record["id"]
+                                protocluster = area["protoclusters"]
                                 
-                                BGCs["Protocluster"].append(area["protoclusters"])
-                                #print(BGCs)
+                                Sample = {"File": {
+                                                    f: {
+                                                        contig: {"PFAM_list": PFAM }}}}
+                               
                                 #Save the start and the end positions of the protocluster in a tuple
                                 protocluster_location = (area["start"], area["end"])
 
@@ -59,10 +60,11 @@ def main():
                                     for area in record.get("areas", []):
                                         domain = select_domains(feature, protocluster_location)
                                         if domain:
-                                            BGCs["PFAM_domains"].append(domain)
+                                            Sample["File"][f][contig]["PFAM_list"].append(domain)
+                                        
                                 
-
-    print(BGCs)
+    print(Sample)
+    #print(BGCs)
 
 def location(feature_loc):
     #take the string and devide by start and end positions, besides DNA_strand
@@ -82,8 +84,9 @@ def select_domains(feature, BCG_loc):
     if feat_start >= BCG_loc[0] and feat_end <= BCG_loc[1]:
         #Selects only the PFAM_domain features
         if feature["type"] == "PFAM_domain":
-                domain_list = feature["qualifiers"].get("db_xref", [])
-                return domain_list
+                domain = feature["qualifiers"]["db_xref"]
+                
+                return domain
 
 main()
 
