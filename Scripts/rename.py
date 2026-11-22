@@ -3,18 +3,20 @@ import os
 import pandas as pd
 import argparse
 
-
 #argparse options
 parser = argparse.ArgumentParser(prog= "rename",
-                                 description= "Rename fastq.gz files based on a metadata table containing two columns: File_name and Sample_name")
-parser.add_argument("-m", "metadata", default=)
+                                 description= "Rename fastq.gz files based on a metadata table")
+parser.add_argument("-v", "--version", action="version", version="%(prog)s 1.0.0" )
+parser.add_argument("-m", "metadata", default="./metadados.tsv", help="metadata table containing two columns: File_name and Sample_name")
+parser.add_argument("-i", "--input", default="./", help="Folder with fastq.gz files")
+args = parser.parse_args()
 
 #Importa o arquivo de metadados
-metadados = pd.read_table("metadados.tsv")
+metadados = pd.read_table(args.metadata)
 print(metadados.head())
 
 #Caminho para o diretório onde os arquivos estão localizados
-dir_path = "../Analysis/RawData/"
+dir_path = args.input
 files = os.listdir(dir_path)
 
 #Seleciona as colunas File_name e Sample_name que serão usadas para renomear os arquivos
