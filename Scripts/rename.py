@@ -1,6 +1,13 @@
 #Importa as bibliotecas
 import os 
 import pandas as pd
+import argparse
+
+
+#argparse options
+parser = argparse.ArgumentParser(prog= "rename",
+                                 description= "Rename fastq.gz files based on a metadata table containing two columns: File_name and Sample_name")
+parser.add_argument("-m", "metadata", default=)
 
 #Importa o arquivo de metadados
 metadados = pd.read_table("metadados.tsv")
