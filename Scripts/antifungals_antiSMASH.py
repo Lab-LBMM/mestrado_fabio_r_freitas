@@ -8,7 +8,7 @@ import pandas as pd
 
 def main():
     parser = argparse.ArgumentParser(description="Identify antifungals BGCs from antismash output")
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s 1.0.0")
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.8.0")
     parser.add_argument("-a", "--antismash_dir", default="./", 
                         help="Path to the directory containing per-sample antiSMASH output folders")
     parser.add_argument("-p", "--pfam", default="./pfam.tsv", 
