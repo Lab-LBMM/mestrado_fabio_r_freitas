@@ -16,8 +16,7 @@ def main():
     args = parser.parse_args()
 
     #Path to the antismash folder
-    #antismash_output_path = args.antismash_dir
-    antismash_results_path = "/home/freitas/LBMM/EvoEcoBio/antismash_ecoevobio_data/identified (teste)-20260927T214618Z-1-001/identified (teste)"
+    antismash_results_path = args.antismash_dir
     pfam_list = "set"
     PFAM = []
     #Find the json file

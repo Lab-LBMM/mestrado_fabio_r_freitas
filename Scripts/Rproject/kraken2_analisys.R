@@ -5,7 +5,7 @@
               
 #Author: Fábio Rodrigo de Freitas
 #Creation date: 22/09/2026
-#Last modification: 04/11/2026
+#Last modification: 22/11/2026
 
               
 #Libraries
@@ -24,6 +24,12 @@ suppressPackageStartupMessages(
 parser <- ArgumentParser()
 
 #Argument for input
+parser$add_argument(
+  "-v","--version",
+  action="version",
+  version="%(prog)s 1.0.0"
+)
+
 parser$add_argument(
  "-i",
  "--input",
@@ -50,11 +56,9 @@ parser$add_argument(
 args <- parser$parse_args()
 
 dir_path <- args$input
-dir_path <- "/home/genomaa/Resultados/0.Outros/M/kraken2_pluspfp_cleaned/kreports/bracken"
-
 
 ##Get the list of files with path
-files_path <- list.files(path = dir_path, pattern = "report", full.names = TRUE, recursive = TRUE ) #recursive = args$folders
+files_path <- list.files(path = dir_path, pattern = "report", full.names = TRUE, recursive = args$folders )
 files_list <- basename(files_path)
 
 ##Import input files with the colnames

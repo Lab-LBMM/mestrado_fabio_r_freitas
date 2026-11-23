@@ -7,29 +7,29 @@ import argparse
 parser = argparse.ArgumentParser(prog= "rename",
                                  description= "Rename fastq.gz files based on a metadata table")
 parser.add_argument("-v", "--version", action="version", version="%(prog)s 1.0.0" )
-parser.add_argument("-m", "metadata", default="./metadados.tsv", help="metadata table containing two columns: File_name and Sample_name")
+parser.add_argument("-m", "metadata", default="./metadados.tsv", help="Metadata table containing two columns: File_name with current names and Sample_name with the new names")
 parser.add_argument("-i", "--input", default="./", help="Folder with fastq.gz files")
 args = parser.parse_args()
 
-#Importa o arquivo de metadados
+#Read metadata table
 metadados = pd.read_table(args.metadata)
 print(metadados.head())
 
-#Caminho para o diretório onde os arquivos estão localizados
+#Folder with fastq.gz files
 dir_path = args.input
 files = os.listdir(dir_path)
 
-#Seleciona as colunas File_name e Sample_name que serão usadas para renomear os arquivos
+#Select columns File_name and Sample_name that will be used to change names
 file_names = metadados['File_name']
 sample_names = metadados['Sample_name']
 
 for old_name, new_name in zip(file_names, sample_names):
-    #Concatenando o caminho da pasta com os arquivos 
-    #Nomes antigos
+    #Join the folder path with files path
+    #Old names
     old = os.path.join(dir_path, old_name)
-    #Nomes novos (usando o f-string)
+    #New names
     new = os.path.join(dir_path, f"{new_name}.fastq.gz")
-    #Renomear
+    #Rename
     os.rename(old, new)
 
 
