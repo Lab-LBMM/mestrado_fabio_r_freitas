@@ -1,0 +1,20 @@
+Pantoea anthophila
+Pantoea stewartii
+Pseudomonas monteilii
+Pseudomonas amygdali
+Pseudomonas fortuita
+Pseudomonas alloputida
+Pantoea sp. JZ29
+Pantoea ananatis
+Pseudomonas sp. D5(2026)
+Pantoea sp. GABEPS69
+Klebsiella pneumoniae
+Escherichia coli
+Acinetobacter sp. 2019-01-05
+Stutzerimonas chloritidismutans
+Enterobacter hormaechei
+Acinetobacter baumannii
+Acinetobacter vivianii
+Acinetobacter nosocomialis
+Burkholderia lata
+Acinetobacter seifertii
